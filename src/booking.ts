@@ -1,0 +1,35 @@
+import type { Db } from './db.ts';
+import type { Booking } from './types.ts';
+
+export type BookingRequest = { jobId: string; crewId: string; start: string; end: string };
+export type BookingResult = { ok: true; booking: Booking } | { ok: false; reason: string };
+
+/** Books a crew for an install, unless the crew is already busy then. */
+export async function bookInstall(db: Db, request: BookingRequest): Promise<BookingResult> {
+  const start = new Date(request.start);
+  const end = new Date(request.end);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) {
+    return { ok: false, reason: 'The install needs a start time and an end time after it.' };
+  }
+
+  const job = await db.getJob(request.jobId);
+  if (!job) return { ok: false, reason: `There is no job ${request.jobId}.` };
+
+  const crewBookings = await db.bookingsForCrew(request.crewId);
+  const clash = crewBookings.find((booked) => {
+    const bookedStart = new Date(booked.start);
+    const bookedEnd = new Date(booked.end);
+    const startsDuring = start >= bookedStart && start < bookedEnd;
+    const endsDuring = end > bookedStart && end <= bookedEnd;
+    return startsDuring || endsDuring;
+  });
+  if (clash) return { ok: false, reason: `That crew is already booked for job ${clash.jobId} then.` };
+
+  const booking = await db.insertBooking({
+    jobId: request.jobId,
+    crewId: request.crewId,
+    start: start.toISOString(),
+    end: end.toISOString(),
+  });
+  return { ok: true, booking };
+}

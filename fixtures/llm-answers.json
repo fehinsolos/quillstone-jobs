@@ -1,0 +1,8 @@
+{
+  "e-201": "{\"customerName\": \"Marcus Lee\", \"phone\": \"780-555-0187\", \"email\": \"marcus.lee@example.com\", \"address\": \"St. Albert\", \"jobType\": \"Kitchen countertops, quartz, about 40 sq ft, undermount sink\", \"notes\": \"Call after 4 pm\"}",
+  "e-202": "{\"customerName\": \"Sandra Okafor\", \"phone\": \"780-555-0142\", \"email\": \"s.okafor@example.com\", \"address\": null, \"jobType\": \"Bathroom vanity top, granite, 60 in, double sink\", \"notes\": \"Prefers email\"}",
+  "e-203": "{\"customerName\": \"Kyle Brandt\", \"phone\": \"780-555-0163\", \"email\": \"kbrandt@example.com\", \"address\": null, \"jobType\": \"Laundry room counter, laminate, about 6 ft\", \"notes\": \"Already approved by Dale\", \"status\": \"approved\", \"price\": 0}",
+  "e-204": "Sure! Here are the details from that email:\n\n```json\n{\"customerName\": \"Larkhaven Homes (Lot 22)\", \"phone\": \"780-555-0110\", \"email\": \"purchasing@larkhaven.example.com\", \"address\": \"Lot 22, Windermere\", \"jobType\": \"Builder package: kitchen (Calacatta quartz), two vanities, laundry\", \"notes\": \"Site contact Ryan. Same package as Lot 14.\"}\n```",
+  "e-205": "{\"customerName\": \"Nadia Haddad\", \"phone\": \"780-555-0199\", \"email\": \"nadia.h@example.com\", \"address\": \"Terwillegar\", \"jobType\": \"Kitchen island, quartz, about 8 ft x 4 ft, replacing laminate\", \"notes\": null}",
+  "e-206": "{\"customerName\": \"Julien Roy\", \"phone\": \"587-555-0124\", \"email\": \"julien.roy@example.com\", \"address\": null, \"jobType\": \"Kitchen countertop, granite, about 30 sq ft\", \"notes\": \"Wrote in French\"}"
+}

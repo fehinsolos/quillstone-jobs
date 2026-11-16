@@ -1,0 +1,13 @@
+{
+  "jobs": [
+    { "id": "job-101", "customerName": "Priya Kaur", "phone": "780-555-0101", "address": "Sherwood Park", "description": "Kitchen, quartz, 38 sq ft" },
+    { "id": "job-102", "customerName": "Tom Becker", "phone": "780-555-0102", "address": "Old Strathcona", "description": "Bathroom vanity, granite" },
+    { "id": "job-103", "customerName": "Lena Fischer", "phone": "587-555-0103", "address": "St. Albert", "description": "Kitchen island, quartz" },
+    { "id": "job-104", "customerName": "Larkhaven Homes (Lot 14)", "phone": "780-555-0110", "address": "Windermere", "description": "Builder package: kitchen, two vanities, laundry" }
+  ],
+  "bookings": [
+    { "id": "bk-1", "jobId": "job-101", "crewId": "crew-2", "start": "2026-12-03T15:00:00.000Z", "end": "2026-12-03T18:00:00.000Z" },
+    { "id": "bk-2", "jobId": "job-102", "crewId": "crew-1", "start": "2026-12-03T19:00:00.000Z", "end": "2026-12-03T22:00:00.000Z" },
+    { "id": "bk-3", "jobId": "job-103", "crewId": "crew-1", "start": "2026-12-04T15:00:00.000Z", "end": "2026-12-04T19:00:00.000Z" }
+  ]
+}
