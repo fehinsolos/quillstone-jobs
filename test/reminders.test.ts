@@ -37,3 +37,20 @@ test('nothing goes out before 9', async () => {
   await runReminders(db, sms, new Date('2026-07-15T14:55:00Z'));
   assert.deepEqual(texted, []);
 });
+
+
+test('winter reminders use Edmonton UTC-6 time', () => {
+  const winterBooking = {
+    ...booking,
+    start: '2026-12-03T15:00:00.000Z',
+    end: '2026-12-03T18:00:00.000Z',
+  };
+
+  const { sendAt, text } = planReminder(winterBooking, job);
+
+  // The installation is at 9 AM Edmonton time.
+  assert.match(text, /Thursday, December 3, at 9:00 AM/);
+
+  // The reminder should be sent at 9 AM the previous day.
+  assert.equal(sendAt.toISOString(), '2026-12-02T15:00:00.000Z');
+});

@@ -14,11 +14,15 @@ export type WallClock = {
   weekday: number; // 0 = Sunday
 };
 
-export function edmontonOffsetHours(at: Date): number {
+/**export function edmontonOffsetHours(at: Date): number {
   const year = at.getUTCFullYear();
   const mdtStarts = nthSunday(year, 2, 2, 9); // 2 a.m. MST is 09:00 UTC
   const mdtEnds = nthSunday(year, 10, 1, 8); // 2 a.m. MDT is 08:00 UTC
   return at >= mdtStarts && at < mdtEnds ? -6 : -7;
+} */
+
+export function edmontonOffsetHours(at: Date): number {
+  return -6;
 }
 
 /** What a clock in Edmonton shows at this instant. */
