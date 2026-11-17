@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { createDb } from '../src/db.ts';
-import { intakeEmail } from '../src/intake.ts';
+import { intakeEmail, intakeAll } from '../src/intake.ts';
 import { recordedLlm } from '../src/llm.ts';
 
 const email = {
@@ -84,3 +84,57 @@ test('prevents AI from approving jobs or setting prices', async () => {
   assert.equal(lead.status, 'needs_review');
   assert.equal(lead.price, undefined);
 });
+
+test('continues processing emails when one AI response is invalid', async () => {
+  const db = createDb();
+
+  const emails = [
+    { ...email, id: 'e-1' },
+    { ...email, id: 'e-2' },
+    { ...email, id: 'e-3' },
+  ];
+
+  const ai = recordedLlm({
+    'e-1': JSON.stringify({ customerName: 'Customer One' }),
+    'e-2': 'This is not valid JSON',
+    'e-3': JSON.stringify({ customerName: 'Customer Three' }),
+  });
+
+  const result = await intakeAll(db, ai, emails);
+  const leads = await db.listLeads();
+
+  // Every customer should have a lead, even if AI extraction fails.
+  assert.equal(result.created, 3);
+  assert.equal(leads.length, 3);
+
+  // The last email must still be processed.
+  assert.ok(leads.some((lead) =>
+    lead.customerName === 'Customer Three'
+  ));
+
+  // The failed extraction must be flagged for manual review.
+  assert.ok(leads.some((lead) =>
+    lead.emailId === 'e-2' && lead.status === 'needs_review'
+  ));
+});
+
+test('extracts valid JSON from an AI Markdown response', async () => {
+  const db = createDb();
+
+  const wrappedEmail = {
+    ...email,
+    id: 'e-204',
+  };
+
+  const ai = recordedLlm({
+    'e-204': 'Here are the details:\n```json\n{"customerName":"Larkhaven Homes","jobType":"Countertop installation"}\n```',
+  });
+
+  const lead = await intakeEmail(db, ai, wrappedEmail);
+
+  assert.equal(lead.customerName, 'Larkhaven Homes');
+  assert.equal(lead.jobType, 'Countertop installation');
+  assert.equal(lead.status, 'needs_review');
+});
+
+
