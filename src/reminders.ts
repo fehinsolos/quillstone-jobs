@@ -37,8 +37,11 @@ export async function runReminders(db: Db, sms: Sms, now: Date): Promise<{ sent:
     if (!job) continue;
     const reminder = planReminder(booking, job);
     if (reminder.sendAt > now) continue; // not yet
+    // Only the process that successfully claims the reminder can send it.
+    const claimed = await db.claimReminder(booking.id, now.toISOString());
+    if (!claimed) continue;
+
     await sms.send(job.phone, reminder.text);
-    await db.markReminderSent(booking.id, now.toISOString());
     sent++;
   }
   return { sent };

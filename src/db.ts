@@ -69,6 +69,22 @@ export function createDb(seed: Seed = {}) {
       return copy(booking);
     },
 
+    // Claim a reminder before sending it to avoid duplicate sends.
+    async claimReminder(bookingId: string, at: string): Promise<boolean> {
+      await roundTrip();
+
+      const booking = bookings.get(bookingId);
+
+      // Another reminder process may have already claimed it.
+      if (!booking || booking.reminderSentAt) {
+        return false;
+      }
+
+      // Check and update without awaiting between them.
+      booking.reminderSentAt = at;
+      return true;
+    },
+
     async bookingsWithoutReminder(): Promise<Booking[]> {
       await roundTrip();
       return [...bookings.values()].filter((booking) => !booking.reminderSentAt).map(copy);

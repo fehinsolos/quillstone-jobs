@@ -54,3 +54,32 @@ test('winter reminders use Edmonton UTC-6 time', () => {
   // The reminder should be sent at 9 AM the previous day.
   assert.equal(sendAt.toISOString(), '2026-12-02T15:00:00.000Z');
 });
+
+test('prevents duplicate texts when two reminder runs overlap', async () => {
+  const db = createDb({
+    jobs: [job],
+    bookings: [booking],
+  });
+
+  const texted: string[] = [];
+
+  const sms = {
+    async send(to: string) {
+      // Simulate a slow texting service.
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      texted.push(to);
+    },
+  };
+
+  const now = new Date('2026-07-15T15:01:00Z');
+
+  // Two reminder processes run at the same time.
+  await Promise.all([
+    runReminders(db, sms, now),
+    runReminders(db, sms, now),
+  ]);
+
+  // The customer should only receive one text.
+  assert.deepEqual(texted, ['780-555-0150']);
+});
+
