@@ -1,49 +1,45 @@
 
-**By Olaleye (Solomon) Fehintoluwa** 
+# Quillstone Jobs — Project Documentation
 
-
+**By Olaleye (Solomon) Fehintoluwa**
 
 ---
 
-BUG #01 | Crew Scheduling — Double Booking 
+## BUG #01 | Crew Scheduling — Double Booking
 
+**Bug definition:** The existing code checks whether the new installation starts or ends inside an existing booking.
 
+**The bug:** If an existing job is 9 AM–12 PM and a new job is 7 AM–4 PM, neither the new start nor end falls inside the existing booking. So the code incorrectly allows both.
 
-**Bug definition:** The existing code checks whether the new installation starts or ends inside an existing booking. 
-
-**The bug:** If an existing job is 9 AM–12 PM and a new job is 7 AM–4 PM, neither the new start nor end falls inside the existing booking. So the code incorrectly allows both. 
-
-**How do we fix this?** 
+### How do we fix this?
 
 1. Get the new booking's start and end times.
 
-                      ↓
+   ↓
 
 2. Retrieve all existing bookings for that crew.
 
-                      ↓
+   ↓
 
 3. Compare the new booking against each existing booking.
 
-                      ↓
+   ↓
 
-4. Check whether start “< bookedEnd && end > bookedStart”.
+4. Check whether start `“< bookedEnd && end > bookedStart”`.
 
-                      ↓
+   ↓
 
 5. If both conditions are true, reject the booking; otherwise, allow it.
 
-In **non-algorithmic** terms, we replace the original start/end checks with a single overlap condition that detects when two bookings share any amount of time. We then test different scheduling scenarios to verify the fix. 
+**In non-algorithmic terms**, we replace the original start/end checks with a single overlap condition that detects when two bookings share any amount of time. We then test different scheduling scenarios to verify the fix.
 
 **Why it works:** The new condition detects all types of overlap, including when a new booking completely surrounds an existing one.
 
 **How it improves the code:** It makes scheduling more reliable, reduces unnecessary conditions, and prevents booking conflicts that could cause delays and customer dissatisfaction.
 
-
-
 ---
 
-BUG #01.2 | Simultaneous Booking Requests
+## BUG #01.2 | Simultaneous Booking Requests
 
 **Bug definition:** It is possible for two employees to book the same crew for overlapping installations at almost exactly the same time.
 
@@ -71,17 +67,15 @@ This is known as a **race condition**. “happens when a program relies on the u
 
 5. Otherwise, save the booking before allowing another competing request to proceed.
 
-In **non-algorithmic terms**, we check crew availability and save the booking part of one protected operation. This prevents two employees from independently booking the same available time slot.
+**In non-algorithmic terms**, we check crew availability and save the booking part of one protected operation. This prevents two employees from independently booking the same available time slot.
 
 **Why it works:** The system prevents competing requests from both passing the availability check before either booking is saved. Once the first booking is recorded, the next request detects the conflict and is rejected.
 
 **How it improves the code:** It prevents race conditions, protects scheduling accuracy, and ensures that only one employee can successfully reserve a crew for a conflicting time slot. For the assessment's simulated database, this can be implemented using a protected booking operation. In a real PostgreSQL system, we would need database-level concurrency protection so the rule also works across multiple servers.
 
-
-
 ---
 
-BUG #02 | Reminder Scheduling — Incorrect Installation Times
+## BUG #02 | Reminder Scheduling — Incorrect Installation Times
 
 **Bug definition:** The system sends customers reminder texts with incorrect installation times and delivers those reminders an hour later than scheduled.
 
@@ -93,7 +87,7 @@ BUG #02 | Reminder Scheduling — Incorrect Installation Times
 
    ↓
 
-2. Locate “edmontonOffsetHours()” inside “src/time.ts”.
+2. Locate `edmontonOffsetHours()` inside `src/time.ts`.
 
    ↓
 
@@ -101,23 +95,21 @@ BUG #02 | Reminder Scheduling — Incorrect Installation Times
 
    ↓
 
-4. Change the function to always return -6.
+4. Change the function to always return `-6`.
 
    ↓
 
 5. Test winter installations to verify both the displayed installation time and reminder delivery time.
 
-In **non-algorithmic terms**, we update the time-zone conversion function to use UTC−6 throughout the year, following the assessment's requirements. Since both the installation time and reminder scheduling depend on this function, one correction addresses both problems.
+**In non-algorithmic terms**, we update the time-zone conversion function to use UTC−6 throughout the year, following the assessment's requirements. Since both the installation time and reminder scheduling depend on this function, one correction addresses both problems.
 
 **Why it works:** The original code subtracts seven hours from UTC during winter instead of six. By consistently applying UTC−6, the system correctly converts installation times and schedules reminder messages for 9 AM Edmonton time.
 
 **How it improves the code:** It improves scheduling accuracy, prevents customer confusion, and ensures reminders are delivered at the intended time. It also simplifies the code by removing unnecessary seasonal calculations.
 
-
-
 ---
 
-BUG #03 | SMS Delivery — Duplicate Reminders
+## BUG #03 | SMS Delivery — Duplicate Reminders
 
 **Bug definition:** Customers sometimes receive the same installation reminder two or three times when multiple reminder processes operate simultaneously.
 
@@ -135,7 +127,7 @@ For example, if two reminder processes run simultaneously while the SMS service 
 
    ↓
 
-3. Attempt to claim the reminder using “claimReminder()”.
+3. Attempt to claim the reminder using `claimReminder()`.
 
    ↓
 
@@ -145,7 +137,7 @@ For example, if two reminder processes run simultaneously while the SMS service 
 
 5. Otherwise, send the SMS and prevent competing processes from claiming the same reminder.
 
-In **non-algorithmic terms**, we introduce a reminder-claim mechanism that allows only one process to take responsibility for sending a particular message.
+**In non-algorithmic terms**, we introduce a reminder-claim mechanism that allows only one process to take responsibility for sending a particular message.
 
 Instead of sending the SMS first and then updating the database, the system claims the reminder before sending it.
 
@@ -157,18 +149,19 @@ Instead of sending the SMS first and then updating the database, the system clai
 
 ---
 
-# BUG #04 | AI Email Intake — Hallucinations and Unauthorized Approvals
+## BUG #04 | AI Email Intake — Hallucinations and Unauthorized Approvals
 
-# Bug definition: The AI system extracts customer information from incoming emails but sometimes invents details or changes business information without authorization.
+**Bug definition:** The AI system extracts customer information from incoming emails but sometimes invents details or changes business information without authorization.
 
 **The bug:** There were two major issues:
 
 1. **AI hallucination:** Sandra Okafor did not provide a phone number in her email, but the AI generated 780-555-0142. The system accepted it without verification.
+
 2. **Unauthorized approval:** Kyle Brandt included an instruction telling the AI to approve his job for $0. The model followed the instruction, and the system accepted the unauthorized status and price changes.
 
-The original code used: ...fields
+The original code used: `...fields`
 
-This allowed the AI's extracted values to overwrite application-controlled fields such as status.
+This allowed the AI's extracted values to overwrite application-controlled fields such as `status`.
 
 Kyle's example is also a form of **prompt injection**, where untrusted customer text attempts to influence the AI's behaviour beyond its intended task.
 
@@ -194,31 +187,31 @@ Kyle's example is also a form of **prompt injection**, where untrusted customer 
 
    ↓
 
-6. Set the lead status to needs_review within the application and prevent AI-generated prices from being saved.
+6. Set the lead status to `needs_review` within the application and prevent AI-generated prices from being saved.
 
-In **non-algorithmic terms**, we stop blindly trusting the AI's response. Instead, we verify important information against the customer's original message and restrict which fields the AI is allowed to populate.
+**In non-algorithmic terms**, we stop blindly trusting the AI's response. Instead, we verify important information against the customer's original message and restrict which fields the AI is allowed to populate.
 
-**Why it works:** The phone-number check rejects values that cannot be found in the original email. Explicitly selecting allowed fields prevents the model from modifying sensitive business decisions such as approval status and pricing. So, even if the AI outputs "status": "approved" or "price": 0, those fields aren't accepted into the new lead.
+**Why it works:** The phone-number check rejects values that cannot be found in the original email. Explicitly selecting allowed fields prevents the model from modifying sensitive business decisions such as approval status and pricing. So, even if the AI outputs `"status": "approved"` or `"price": 0`, those fields aren't accepted into the new lead.
 
 **How it improves the code:** It improves data accuracy, reduces the impact of AI hallucinations, and creates a clear separation between AI-assisted data extraction and human-controlled business decisions.
 
 **Do Limits Exist?** Our phone-number validation handles common 10-digit formatting differences but isn't a complete international phone-number validation system. Other AI-extracted fields, such as email addresses and customer names, could also benefit from additional verification.
 
-
-
 ---
 
-# BUG #05 | AI Email Intake — Interrupted Email Processing
+## BUG #05 | AI Email Intake — Interrupted Email Processing
 
 **Bug definition:** The system sometimes stops processing incoming customer emails when the AI returns an unexpected response format.
 
 **The bug:** The original code assumes every AI response contains valid JSON and immediately calls:
 
+```typescript
 JSON.parse(await llm.extract(email))
+```
 
 However, the AI sometimes returns explanations, Markdown code blocks, or invalid JSON instead of a plain JSON object. e.g, the Larkhaven Homes AI response contained useful customer information inside a Markdown code block, preceded by explanatory text.
 
-Since the code tried to parse the entire response as JSON, it produced a syntax error because intakeAll() did not handle that error, the entire batch stopped processing. Emails appearing later in the batch were never recorded.
+Since the code tried to parse the entire response as JSON, it produced a syntax error because `intakeAll()` did not handle that error, the entire batch stopped processing. Emails appearing later in the batch were never recorded.
 
 ### How do we fix this?
 
@@ -234,7 +227,7 @@ Since the code tried to parse the entire response as JSON, it produced a syntax 
 
    ↓
 
-4. Attempt to parse the extracted response using JSON.parse().
+4. Attempt to parse the extracted response using `JSON.parse()`.
 
    ↓
 
@@ -242,13 +235,13 @@ Since the code tried to parse the entire response as JSON, it produced a syntax 
 
    ↓
 
-6. If parsing fails, catch the error and create a fallback lead marked needs_review.
+6. If parsing fails, catch the error and create a fallback lead marked `needs_review`.
 
    ↓
 
 7. Continue processing the remaining customer emails.
 
-In **non-algorithmic terms**, we make the email-processing system more tolerant of unexpected AI responses. First, we extract JSON from Markdown formatting when possible. Second, we introduce error handling so a failed extraction doesn't terminate the entire email-processing batch.
+**In non-algorithmic terms**, we make the email-processing system more tolerant of unexpected AI responses. First, we extract JSON from Markdown formatting when possible. Second, we introduce error handling so a failed extraction doesn't terminate the entire email-processing batch.
 
 If the response cannot be recovered, we preserve the customer's email as a lead requiring manual review.
 
@@ -258,13 +251,11 @@ If the response cannot be recovered, we preserve the customer's email as a lead 
 
 **Do limits exist?** The current implementation recognizes JSON enclosed in Markdown code fences but may not recover every possible malformed response. A production version could also use schema validation, structured model outputs, and more detailed error logging.
 
-
-
 ---
 
-Testing & Verification
+## Testing & Verification
 
-Using **regression testing** to verify each bug fix. First, we wrote tests in VS Code to reproduce the reported problems, then ran npm.cmd test.
+Using **regression testing** to verify each bug fix. First, we wrote tests in VS Code to reproduce the reported problems, then ran `npm.cmd test`.
 
 **Bug #01:** Tested overlapping and simultaneous bookings to verify scheduling conflicts were prevented.
 
@@ -276,4 +267,4 @@ Using **regression testing** to verify each bug fix. First, we wrote tests in VS
 
 **Bug #05:** Invalid AI responses initially crash email processing.
 
-After implementing the fixes, the tests passed. We also ran “npm.cmd run morning, confirming all six emails were processed and scheduling and reminders worked correctly.
+After implementing the fixes, the tests passed. We also ran “`npm.cmd run morning`, confirming all six emails were processed and scheduling and reminders worked correctly.
