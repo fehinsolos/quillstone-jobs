@@ -31,3 +31,50 @@ test('another crew can take the same time', async () => {
   const result = await bookInstall(db, { jobId: 'job-1', crewId: 'crew-2', start: '2026-12-03T15:00:00Z', end: '2026-12-03T18:00:00Z' });
   assert.equal(result.ok, true);
 });
+
+test('rejects a booking that surrounds an existing install', async () => {
+  const db = createDb({ jobs: [job], bookings: [morning] });
+
+  const result = await bookInstall(db, {
+    jobId: 'job-1',
+    crewId: 'crew-1',
+    start: '2026-12-03T13:00:00Z',
+    end: '2026-12-03T23:00:00Z',
+  });
+
+  assert.equal(result.ok, false);
+  assert.equal((await db.listBookings()).length, 1);
+});
+
+test('prevents simultaneous bookings for the same crew', async () => {
+  const db = createDb({ jobs: [job] });
+
+  const request = {
+    jobId: 'job-1',
+    crewId: 'crew-1',
+    start: '2026-12-03T15:00:00Z',
+    end: '2026-12-03T18:00:00Z',
+  };
+
+  const results = await Promise.all([
+    bookInstall(db, request),
+    bookInstall(db, request),
+  ]);
+
+  assert.equal(results.filter((result) => result.ok).length, 1);
+  assert.equal((await db.listBookings()).length, 1);
+});
+
+test('allows back-to-back bookings', async () => {
+  const db = createDb({ jobs: [job], bookings: [morning] });
+
+  const result = await bookInstall(db, {
+    jobId: 'job-1',
+    crewId: 'crew-1',
+    start: morning.end,
+    end: '2026-12-03T20:00:00Z',
+  });
+
+  assert.equal(result.ok, true);
+});
+

@@ -29,6 +29,39 @@ export function createDb(seed: Seed = {}) {
       return [...bookings.values()].filter((booking) => booking.crewId === crewId).map(copy);
     },
 
+    // race condition implementation
+    async reserveCrewIfAvailable(fields: Omit<Booking, 'id'>): Promise<
+      { ok: true; booking: Booking } |
+      { ok: false; conflictingJobId: string }
+    > {
+      await roundTrip();
+
+      const newStart = new Date(fields.start);
+      const newEnd = new Date(fields.end);
+
+      const conflict = [...bookings.values()].find((existing) => {
+        const bookedStart = new Date(existing.start);
+        const bookedEnd = new Date(existing.end);
+
+        return existing.crewId === fields.crewId &&
+          newStart < bookedEnd && newEnd > bookedStart;
+      });
+
+      if (conflict) {
+        return { ok: false, conflictingJobId: conflict.jobId };
+      }
+
+      // No await between checking and inserting.
+      const booking: Booking = {
+        ...copy(fields),
+        id: crypto.randomUUID(),
+      };
+
+      bookings.set(booking.id, booking);
+      return { ok: true, booking: copy(booking) };
+    },
+
+
     async insertBooking(fields: Omit<Booking, 'id'>): Promise<Booking> {
       await roundTrip();
       const booking: Booking = { ...copy(fields), id: crypto.randomUUID() };

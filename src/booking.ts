@@ -15,13 +15,12 @@ export async function bookInstall(db: Db, request: BookingRequest): Promise<Book
   const job = await db.getJob(request.jobId);
   if (!job) return { ok: false, reason: `There is no job ${request.jobId}.` };
 
-  const crewBookings = await db.bookingsForCrew(request.crewId);
+  /**const crewBookings = await db.bookingsForCrew(request.crewId);
   const clash = crewBookings.find((booked) => {
     const bookedStart = new Date(booked.start);
     const bookedEnd = new Date(booked.end);
-    const startsDuring = start >= bookedStart && start < bookedEnd;
-    const endsDuring = end > bookedStart && end <= bookedEnd;
-    return startsDuring || endsDuring;
+    const overlaps = start < bookedEnd && end > bookedStart;
+    return overlaps;
   });
   if (clash) return { ok: false, reason: `That crew is already booked for job ${clash.jobId} then.` };
 
@@ -31,5 +30,23 @@ export async function bookInstall(db: Db, request: BookingRequest): Promise<Book
     start: start.toISOString(),
     end: end.toISOString(),
   });
-  return { ok: true, booking };
+  return { ok: true, booking }; */
+
+  const result = await db.reserveCrewIfAvailable({
+    jobId: request.jobId,
+    crewId: request.crewId,
+    start: start.toISOString(),
+    end: end.toISOString(),
+  });
+
+  if (!result.ok) {
+    return {
+      ok: false,
+      reason: `That crew is already booked for job ${result.conflictingJobId} then.`,
+    };
+  }
+
+  return { ok: true, booking: result.booking };
 }
+
+
